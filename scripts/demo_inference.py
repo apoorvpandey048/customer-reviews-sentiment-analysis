@@ -19,15 +19,18 @@ def load_trained_model(checkpoint_path: str, device: str = "cpu"):
     """Load trained model from checkpoint"""
     print(f"Loading model from {checkpoint_path}...")
     
-    # Create model
-    model = create_model(
-        num_sentiment_classes=3,
-        num_aspects=10,
-        dropout=0.3
-    )
+    # Create model with correct config
+    config = {
+        'num_sentiments': 3,
+        'num_aspects': 10,
+        'dropout_rate': 0.3,
+        'freeze_bert': False,
+        'pretrained_model': 'distilbert-base-uncased'
+    }
+    model, _ = create_model(config)
     
     # Load checkpoint
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.to(device)
     model.eval()
@@ -53,21 +56,18 @@ def predict_review(model, tokenizer, review_text: str, device: str = "cpu"):
     
     # Predict
     with torch.no_grad():
-        outputs = model(input_ids, attention_mask)
+        outputs = model.get_predictions(input_ids, attention_mask)
     
-    # Process outputs
-    sentiment_logits, rating_pred, aspect_logits = outputs
-    
-    # Get sentiment prediction
-    sentiment_probs = torch.softmax(sentiment_logits, dim=1)[0]
-    sentiment_idx = torch.argmax(sentiment_probs).item()
+    # Process outputs (model.get_predictions() returns a dictionary)
+    sentiment_probs = outputs['sentiment_probs'][0]
+    sentiment_idx = outputs['sentiment_pred'][0].item()
     sentiment_labels = ['Negative', 'Neutral', 'Positive']
     
     # Get rating prediction
-    predicted_rating = rating_pred[0].item()
+    predicted_rating = outputs['rating_pred'][0].item()
     
-    # Get aspect predictions (threshold at 0.5)
-    aspect_probs = torch.sigmoid(aspect_logits)[0]
+    # Get aspect predictions
+    aspect_probs = outputs['aspect_probs'][0]
     aspect_names = [
         'Quality', 'Price', 'Value For Money', 'Shipping', 
         'Packaging', 'Customer Service', 'Ease Of Use',
