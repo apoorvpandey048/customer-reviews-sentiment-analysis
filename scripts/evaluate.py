@@ -45,7 +45,7 @@ from src.dataset import ReviewDataset, create_dataloaders
 def load_model(checkpoint_path: Path, device: torch.device):
     """Load trained model from checkpoint."""
     print(f"Loading model from {checkpoint_path}...")
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     
     config = checkpoint['config']
     model_config = {

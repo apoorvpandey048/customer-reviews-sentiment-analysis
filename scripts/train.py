@@ -18,9 +18,8 @@ Date: November 2025
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import get_linear_schedule_with_warmup
 from torch.utils.tensorboard import SummaryWriter
-from transformers import DistilBertTokenizer
+from transformers import DistilBertTokenizer, get_linear_schedule_with_warmup
 import pandas as pd
 from pathlib import Path
 import argparse
@@ -36,6 +35,21 @@ sys.path.append(str(Path(__file__).parent.parent))
 from src.model import MultiTaskReviewModel, MultiTaskLoss, create_model
 from src.dataset import ReviewDataset, create_dataloaders
 from src.config import get_config
+
+
+def convert_to_serializable(obj):
+    """Convert numpy types to Python native types for JSON serialization."""
+    if isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_to_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_serializable(item) for item in obj]
+    return obj
 
 
 def train_epoch(
@@ -101,7 +115,7 @@ def train_epoch(
         num_batches += 1
         
         # Update progress bar
-        progress_bar.set_postfix({'loss': loss_dict['total']:.4f})
+        progress_bar.set_postfix({'loss': f"{loss_dict['total']:.4f}"})
     
     # Average losses
     avg_losses = {key: val / num_batches for key, val in total_losses.items()}
@@ -178,7 +192,7 @@ def evaluate(
             all_rating_labels.extend(rating.cpu().numpy())
             
             # Update progress bar
-            progress_bar.set_postfix({'loss': loss_dict['total']:.4f})
+            progress_bar.set_postfix({'loss': f"{loss_dict['total']:.4f}"})
     
     # Average losses
     avg_losses = {key: val / num_batches for key, val in total_losses.items()}
@@ -229,8 +243,9 @@ def train(config: dict):
     logs_dir.mkdir(parents=True, exist_ok=True)
     
     # Save configuration
+    config_serializable = convert_to_serializable(config)
     with open(output_dir / 'config.json', 'w') as f:
-        json.dump(config, f, indent=2)
+        json.dump(config_serializable, f, indent=2)
     print(f"✓ Configuration saved to {output_dir / 'config.json'}\n")
     
     # Load data
@@ -380,7 +395,7 @@ def train(config: dict):
     print("EVALUATING ON TEST SET")
     print("="*80 + "\n")
     
-    checkpoint = torch.load(checkpoint_dir / 'best_model.pt')
+    checkpoint = torch.load(checkpoint_dir / 'best_model.pt', weights_only=False)
     model.load_state_dict(checkpoint['model_state_dict'])
     
     test_losses = evaluate(model, test_loader, loss_fn, device, epoch=0, split='Test')
@@ -401,8 +416,11 @@ def train(config: dict):
         'val_losses': checkpoint['val_losses']
     }
     
+    # Convert numpy types to Python types for JSON serialization
+    test_results_serializable = convert_to_serializable(test_results)
+    
     with open(output_dir / 'test_results.json', 'w') as f:
-        json.dump(test_results, f, indent=2)
+        json.dump(test_results_serializable, f, indent=2)
     
     print(f"\n✓ Test results saved to {output_dir / 'test_results.json'}")
     

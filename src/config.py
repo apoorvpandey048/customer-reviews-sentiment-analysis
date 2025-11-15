@@ -305,3 +305,21 @@ if __name__ == "__main__":
     print(f"  Max Epochs: {NUM_EPOCHS}")
     print(f"  Max Sequence Length: {MAX_LENGTH}")
     print(f"  Experiment: {EXPERIMENT_NAME} {EXPERIMENT_VERSION}")
+
+
+def get_config():
+    """Return a simple config object (SimpleNamespace) containing all uppercase
+    configuration constants defined in this module. This allows scripts to import
+    a single `get_config()` function and receive a namespaced object.
+    """
+    from types import SimpleNamespace
+    import sys
+
+    module = sys.modules[__name__]
+    cfg = {}
+    for name in dir(module):
+        # collect only constant-like names (UPPERCASE)
+        if name.isupper():
+            cfg[name] = getattr(module, name)
+
+    return SimpleNamespace(**cfg)
