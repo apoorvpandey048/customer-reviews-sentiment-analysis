@@ -347,8 +347,9 @@ python scripts/evaluate.py \
 ## 📧 Contact & Resources
 
 **Student:** Apoorv Pandey  
+**Student ID:** 230714  
 **Course:** CSE3712 - Big Data Analytics  
-**Institution:** [Your Institution]  
+**Institution:** BML Munjal University  
 **Date:** November 2025
 
 **Project Links:**

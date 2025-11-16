@@ -114,17 +114,24 @@ class ReviewDataset(Dataset):
     def get_class_weights(self) -> torch.Tensor:
         """
         Calculate class weights for imbalanced sentiment data.
+        Always returns weights for 3 classes (negative, neutral, positive)
+        even if some classes are missing from the dataset.
         
         Returns:
-            Tensor of weights for each sentiment class
+            Tensor of weights for each sentiment class [negative, neutral, positive]
         """
-        sentiment_counts = self.dataframe['sentiment_label'].value_counts().sort_index()
+        sentiment_counts = self.dataframe['sentiment_label'].value_counts()
         total_samples = len(self.dataframe)
         
-        # Inverse frequency weighting
-        weights = total_samples / (len(sentiment_counts) * sentiment_counts.values)
+        # Initialize weights for all 3 classes
+        weights = torch.ones(3, dtype=torch.float32)
         
-        return torch.tensor(weights, dtype=torch.float32)
+        # Calculate inverse frequency weighting for existing classes
+        for label in [0, 1, 2]:  # negative, neutral, positive
+            if label in sentiment_counts.index:
+                weights[label] = total_samples / (3 * sentiment_counts[label])
+        
+        return weights
     
     def get_aspect_statistics(self) -> Dict[str, float]:
         """

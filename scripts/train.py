@@ -251,9 +251,20 @@ def train(config: dict):
     # Load data
     print("Loading datasets...")
     data_dir = Path(config['data_dir'])
-    train_df = pd.read_parquet(data_dir / 'train.parquet')
-    val_df = pd.read_parquet(data_dir / 'val.parquet')
-    test_df = pd.read_parquet(data_dir / 'test.parquet')
+    train_file = data_dir / config.get('train_file', 'train.parquet')
+    val_file = data_dir / config.get('val_file', 'val.parquet')
+    test_file = data_dir / config.get('test_file', 'test.parquet')
+    
+    # Support both CSV and Parquet
+    if train_file.suffix == '.csv':
+        train_df = pd.read_csv(train_file)
+        val_df = pd.read_csv(val_file)
+        test_df = pd.read_csv(test_file)
+    else:
+        train_df = pd.read_parquet(train_file)
+        val_df = pd.read_parquet(val_file)
+        test_df = pd.read_parquet(test_file)
+    
     print(f"✓ Train: {len(train_df)} | Val: {len(val_df)} | Test: {len(test_df)}\n")
     
     # Initialize tokenizer
@@ -442,6 +453,12 @@ def main():
     
     parser.add_argument('--data_dir', type=str, default='data/processed',
                        help='Directory containing preprocessed data')
+    parser.add_argument('--train_file', type=str, default='train.parquet',
+                       help='Training data filename')
+    parser.add_argument('--val_file', type=str, default='val.parquet',
+                       help='Validation data filename')
+    parser.add_argument('--test_file', type=str, default='test.parquet',
+                       help='Test data filename')
     parser.add_argument('--output_dir', type=str, default='models',
                        help='Directory to save model checkpoints and logs')
     parser.add_argument('--model_name', type=str, default='distilbert-base-uncased',
@@ -474,9 +491,21 @@ def main():
                        help='Number of DataLoader workers')
     parser.add_argument('--seed', type=int, default=42,
                        help='Random seed')
+    parser.add_argument('--experiment_name', type=str, default='baseline',
+                       help='Name of experiment for tracking')
+    parser.add_argument('--class_weight_negative', type=float, default=2.05,
+                       help='Class weight for negative sentiment')
+    parser.add_argument('--class_weight_neutral', type=float, default=2.41,
+                       help='Class weight for neutral sentiment')
+    parser.add_argument('--class_weight_positive', type=float, default=0.48,
+                       help='Class weight for positive sentiment')
     
     args = parser.parse_args()
     config = vars(args)
+    
+    # Use experiment name in output directory if not baseline
+    if config['experiment_name'] != 'baseline':
+        config['output_dir'] = f"experiments/{config['experiment_name']}"
     
     # Start training
     train(config)

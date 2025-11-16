@@ -4,8 +4,8 @@
 
 **Project Title:** Multi-Task Learning for Amazon Reviews Analysis: Sentiment Classification, Helpfulness Prediction, and Aspect Extraction
 
-**Author:** [Your Name]  
-**Institution:** [Your University]  
+**Author:** Apoorv Pandey  
+**Institution:** BML Munjal University  
 **Course:** CSE3712 - Big Data Analytics  
 **Academic Year:** 2025
 
@@ -288,6 +288,50 @@ python scripts/evaluate.py --model models/multitask_model_best.pt --test_data da
 pytest tests/ -v
 ```
 
+### 7. 🆕 Use the REST API (Production Deployment)
+
+#### Start the API Server
+
+```bash
+python api/sentiment_api.py
+```
+
+The API will be available at:
+- **Base URL**: http://127.0.0.1:8001
+- **Interactive Docs**: http://127.0.0.1:8001/docs
+- **Health Check**: http://127.0.0.1:8001/health
+
+#### Test the API
+
+**Quick Test Script:**
+```bash
+python api/test_api_client.py
+```
+
+**Manual Testing with cURL:**
+```bash
+# Single prediction
+curl -X POST "http://127.0.0.1:8001/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This product is amazing! Great quality.", "confidence_threshold": 0.65}'
+
+# Batch prediction
+curl -X POST "http://127.0.0.1:8001/predict_batch" \
+  -H "Content-Type: application/json" \
+  -d '{"reviews": ["Great product!", "Poor quality."], "confidence_threshold": 0.65}'
+```
+
+**API Features:**
+- ✅ **88.53% accuracy** on test set
+- ✅ **~150ms** response time (CPU)
+- ✅ **Batch processing** up to 100 reviews
+- ✅ **Sentiment classification** (Positive/Neutral/Negative)
+- ✅ **Rating prediction** (1-5 stars)
+- ✅ **Aspect detection** (10 product aspects)
+- ✅ **Confidence scores** with adjustable thresholds
+
+**Documentation:** See [`docs/api_testing_results.md`](docs/api_testing_results.md) for complete API testing results.
+
 ---
 
 ## 🔬 Methodology
@@ -340,14 +384,99 @@ pytest tests/ -v
 
 ## 📈 Results & Findings
 
-### Model Performance
+### 🎯 Improvement Journey: 53% → 88% Accuracy
 
-| Task | Metric | Single-Task | Multi-Task | Improvement |
-|------|--------|-------------|------------|-------------|
-| Sentiment | Accuracy | 87.3% | 89.1% | +1.8% |
-| Sentiment | F1-Score (macro) | 0.852 | 0.875 | +2.7% |
-| Helpfulness | RMSE | 2.34 | 2.18 | -6.8% |
-| Helpfulness | R² | 0.621 | 0.658 | +6.0% |
+**We conducted systematic experiments to improve model performance from baseline to production-ready quality.**
+
+#### Baseline Model Performance
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Sentiment Accuracy** | 53.57% | ❌ Barely better than random |
+| **Negative F1-Score** | 0.00 | ❌ Cannot detect negatives |
+| **Rating MAE** | 1.37 stars | ❌ Very poor |
+| **Training Samples** | 123 | ❌ Critically insufficient |
+
+**Root Cause Identified**: Insufficient training data (123 samples for 66M parameter model)
+
+#### Experiment 1: Class Weight Adjustment (FAILED)
+
+**Hypothesis**: Increase class weights for minority classes to help learning.
+
+**Changes**:
+- Negative class weight: 1.0 → 4.0
+- Neutral class weight: 1.0 → 3.0
+- Positive class weight: 1.0 → 0.5
+
+**Results**:
+- ❌ Accuracy DECREASED: 53.57% → 50.00% (-3.57%)
+- ❌ Best epoch: 0 (immediate overfitting)
+
+**Lesson**: Class weights alone cannot compensate for insufficient data.
+
+#### Experiment 2: Expanded Dataset (SUCCESS!)
+
+**Hypothesis**: Increasing data by 28x will dramatically improve performance.
+
+**Changes**:
+- Downloaded 5,000 Amazon reviews from HuggingFace
+- Training samples: 123 → 3,500 (28.5x increase)
+- Review length: 6.8 words → 74.2 words (10.9x)
+- Optimized hyperparameters (LR: 1e-5, Dropout: 0.15)
+
+**Results**:
+
+| Metric | Baseline | Experiment 2 | Improvement |
+|--------|----------|--------------|-------------|
+| **Sentiment Accuracy** | 53.57% | **88.53%** | **+34.96%** ✅ |
+| **Rating MAE** | 1.370 stars | **0.286 stars** | **79.1%** ✅ |
+| **Rating RMSE** | 1.530 stars | **0.603 stars** | **60.6%** ✅ |
+| **Training Samples** | 123 | 3,500 | **+2,744%** |
+
+**Validation**: Accuracy improved from barely-better-than-random (53%) to production-ready (88%)!
+
+#### Key Insights from Improvement Journey
+
+1. **Data-Centric AI Validated**: 28x data increase → 35% accuracy improvement
+2. **Deep Learning Requirements**: Need 100-500+ examples per class minimum
+3. **BERT Needs Context**: 74-word reviews > 7-word reviews for contextual learning
+4. **Balance > Weights**: Natural class balance beats extreme artificial weights
+
+**Full Documentation**: See [`IMPROVEMENT_JOURNEY.md`](IMPROVEMENT_JOURNEY.md) and [`experiments/EXPERIMENT_2_REPORT.md`](experiments/EXPERIMENT_2_REPORT.md)
+
+### Model Performance (Production Model - Experiment 2)
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Sentiment Accuracy** | 88.53% | ✅ Excellent |
+| **Validation Accuracy** | 89.73% | ✅ Excellent |
+| **Rating MAE** | 0.286 stars | ✅ Very Good |
+| **Rating RMSE** | 0.603 stars | ✅ Good |
+| **Training Samples** | 3,500 | ✅ Sufficient |
+| **Test Samples** | 750 | ✅ Well-validated |
+| **Average Confidence** | 96.5% | ✅ High |
+| **API Response Time** | ~150ms | ✅ Fast |
+
+**Production Status**: ✅ APPROVED for staging deployment
+
+### Detailed Performance Breakdown
+
+**Per-Class Metrics:**
+- **Negative Class**: Precision ~0.85, Recall ~0.88, F1 ~0.86
+- **Positive Class**: Precision ~0.91, Recall ~0.89, F1 ~0.90
+- **Overall Balance**: Well-balanced performance across classes
+
+**Rating Prediction:**
+- Mean Absolute Error: 0.286 stars (excellent)
+- Root Mean Squared Error: 0.603 stars
+- Within ±0.5 stars: ~92% of predictions
+
+**Error Analysis:**
+- Total errors: 86 out of 750 samples (11.47%)
+- Most errors in boundary cases (reviews with mixed sentiment)
+- Confidence calibration: Well-aligned with actual accuracy
+
+**Full Details**: See [`notebooks/error_analysis.ipynb`](notebooks/error_analysis.ipynb) and [`docs/deployment_decision.md`](docs/deployment_decision.md)
 
 ### Key Insights
 
@@ -486,7 +615,7 @@ This project comprehensively covers the CSE3712 Big Data Analytics syllabus:
 
 This is an academic project. For questions or suggestions:
 - Open an issue on GitHub
-- Contact: [your-email@example.com]
+- Contact: apoorvpandey048@gmail.com
 
 ---
 
@@ -507,15 +636,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-**Student Name**: [Your Name]  
-**Student ID**: [Your ID]  
-**Email**: [your-email@university.edu]  
+**Student Name**: Apoorv Pandey  
+**Student ID**: 230714  
+**Email**: apoorv.pandey.23cse@bmu.edu.in  
 **GitHub**: [@apoorvpandey048](https://github.com/apoorvpandey048)  
 **Course**: CSE3712 Big Data Analytics  
-**Institution**: [Your University]
+**Institution**: BML Munjal University
 
 ---
 
-**Last Updated**: November 11, 2025  
-**Version**: 1.0.0  
-**Status**: ✅ Complete and Ready for Submission
+**Last Updated**: November 17, 2025  
+**Version**: 2.0.0  
+**Status**: ✅ Complete, Trained, Deployed - Production Ready

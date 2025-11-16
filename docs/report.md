@@ -3,8 +3,9 @@
 ## CSE3712: Big Data Analytics - End Semester Project Report
 
 **Student Name:** Apoorv Pandey  
+**Student ID:** 230714  
 **Date:** November 2025  
-**Institution:** [Your Institution]  
+**Institution:** BML Munjal University  
 **Course:** CSE3712 - Big Data Analytics
 
 ---

@@ -13,8 +13,9 @@
 #### Using DistilBERT for Sentiment, Rating & Aspect Extraction
 
 **Student:** Apoorv Pandey  
+**Student ID:** 230714  
 **Course:** CSE3712 - Big Data Analytics  
-**Institution:** [Your Institution]  
+**Institution:** BML Munjal University  
 **Date:** November 2025
 
 **Project Links:**
@@ -536,7 +537,8 @@ L_total = α·L_sentiment + β·L_rating + γ·L_aspect
 
 **Contact Information:**
 - **Student:** Apoorv Pandey
-- **Email:** [Your Email]
+- **Student ID:** 230714
+- **Email:** apoorv.pandey.23cse@bmu.edu.in
 - **GitHub:** https://github.com/apoorvpandey048/customer-reviews-sentiment-analysis
 
 **Resources:**

@@ -567,7 +567,7 @@ The synthesis of distributed computing principles (MapReduce thinking), deep lea
 ---
 
 **Document Metadata**  
-**Author**: [Your Name]  
+**Author**: Apoorv Pandey  
 **Course**: CSE3712 Big Data Analytics  
 **Date**: November 11, 2025  
 **Version**: 1.0  
